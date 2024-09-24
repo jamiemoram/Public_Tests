@@ -1,0 +1,46 @@
+from flask import Flask, render_template, request
+import mysql.connector
+
+app = Flask(__name__)
+
+# Database connection configuration
+db_config = {
+    'host': 'localhost',
+    'user': 'root',  # Update with your MySQL username
+    'password': '*********',  # Update with your MySQL password
+    'database': 'freshbins'
+}
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/filter', methods=['POST'])
+def filter():
+    query = request.form['query']
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT postcode FROM final_tab WHERE postcode LIKE %s", (f'%{query}%',))
+    results = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+
+    return {'results': [row[0] for row in results]}
+
+@app.route('/get_data', methods=['POST'])
+def get_data():
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT customer_id, postcode, street_name, house FROM final_tab")  # Adjust as necessary to fetch the relevant data
+    results = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return {'data': results}
+
+if __name__ == '__main__':
+    app.run(debug=True)
